@@ -26,7 +26,8 @@ import tarfile
 
 import numpy as np
 
-from six.moves import cPickle
+import six
+from six.moves import cPickle, xrange
 
 from tensor2tensor.data_generators import generator_utils
 from tensor2tensor.data_generators import image_utils
@@ -89,8 +90,11 @@ def cifar_generator(cifar_version, tmp_dir, training, how_many, start_from=0):
   all_images, all_labels = [], []
   for filename in data_files:
     path = os.path.join(tmp_dir, prefix, filename)
-    with tf.gfile.Open(path, "r") as f:
-      data = cPickle.load(f)
+    with tf.gfile.Open(path, "rb") as f:
+      if six.PY3:
+        data = cPickle.load(f, encoding='latin1')
+      else:
+        data = cPickle.load(f)
     images = data["data"]
     num_images = images.shape[0]
     images = images.reshape((num_images, 3, image_size, image_size))
@@ -411,8 +415,8 @@ class Img2imgCifar100(ImageCifar100):
 
   def hparams(self, defaults, unused_model_hparams):
     p = defaults
-    p.input_modality = {"inputs": ("image:identity", 256)}
-    p.target_modality = ("image:identity", 256)
+    p.input_modality = {"inputs": ("image:identity", 25)}
+    p.target_modality = ("image:identity", 25)
     p.batch_size_multiplier = 256
     p.max_expected_batch_size_per_shard = 4
     p.input_space_id = 1
